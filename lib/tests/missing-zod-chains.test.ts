@@ -34,7 +34,7 @@ describe("missing-zod-chains", () => {
           "import { makeApi, Zodios, type ZodiosOptions } from "@zodios/core";
           import { z } from "zod";
 
-          const stringWithChains = z.string();
+          const stringWithChains = z.string().min(5);
 
           export const schemas = {
             stringWithChains,
@@ -88,7 +88,7 @@ describe("missing-zod-chains", () => {
           "import { makeApi, Zodios, type ZodiosOptions } from "@zodios/core";
           import { z } from "zod";
 
-          const integerWithChains = z.number();
+          const integerWithChains = z.number().int().gte(10);
 
           export const schemas = {
             integerWithChains,
@@ -289,7 +289,7 @@ describe("missing-zod-chains", () => {
           "import { makeApi, Zodios, type ZodiosOptions } from "@zodios/core";
           import { z } from "zod";
 
-          const nullable = z.object({}).partial().passthrough();
+          const nullable = z.object({}).partial().passthrough().nullable();
 
           export const schemas = {
             nullable,
@@ -347,7 +347,7 @@ describe("missing-zod-chains", () => {
           import { z } from "zod";
 
           const anyOfType = z.union([
-            z.object({}).partial().passthrough(),
+            z.object({}).partial().passthrough().nullable(),
             z.object({ foo: z.string() }).partial().passthrough(),
           ]);
 

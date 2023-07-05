@@ -51,8 +51,16 @@ test("missing-zod-chains-on-z-object-with-refs-props", async () => {
       "import { makeApi, Zodios, type ZodiosOptions } from "@zodios/core";
       import { z } from "zod";
 
-      const Email = z.string();
-      const Password = z.string();
+      const Email = z
+        .string()
+        .min(6)
+        .max(255)
+        .regex(/(EmailRegex)/);
+      const Password = z
+        .string()
+        .min(16)
+        .max(255)
+        .regex(/(PasswordRegex)/);
       const AddUser = z
         .object({
           email: Email.min(6)

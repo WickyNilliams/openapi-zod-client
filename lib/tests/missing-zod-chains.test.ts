@@ -313,7 +313,7 @@ describe("missing-zod-chains", () => {
         `);
     });
 
-    test("anyOf", async () => {
+    test("anyOf, oneOf, allOf, array", async () => {
         const openApiDoc: OpenAPIObject = {
             openapi: "3.0.0",
             info: { title: "Schema test", version: "1.0.0" },
@@ -325,15 +325,47 @@ describe("missing-zod-chains", () => {
                             { type: "object", properties: { foo: { type: "string" } } },
                         ],
                     },
+                    oneOfType: {
+                        oneOf: [
+                            { type: "object", nullable: true },
+                            { type: "object", properties: { foo: { type: "string" } } },
+                        ],
+                    },
+                    allOfType: {
+                        allOf: [
+                            { type: "object", properties: { foo: { type: "string" } } },
+                            { type: "object", properties: { bar: { type: "string" } } },
+                        ],
+                    },
                 },
             },
             paths: {
-                "/pet": {
-                    put: {
+                "/anyOf": {
+                    get: {
                         responses: {
                             "200": {
                                 description: "Successful operation",
                                 content: { "application/json": { schema: { $ref: "#/components/schemas/anyOfType" } } },
+                            },
+                        },
+                    },
+                },
+                "/oneOf": {
+                    get: {
+                        responses: {
+                            "200": {
+                                description: "Successful operation",
+                                content: { "application/json": { schema: { $ref: "#/components/schemas/oneOfType" } } },
+                            },
+                        },
+                    },
+                },
+                "/allOf": {
+                    get: {
+                        responses: {
+                            "200": {
+                                description: "Successful operation",
+                                content: { "application/json": { schema: { $ref: "#/components/schemas/allOfType" } } },
                             },
                         },
                     },
@@ -347,12 +379,94 @@ describe("missing-zod-chains", () => {
           import { z } from "zod";
 
           const anyOfType = z.union([
-            z.object({}).partial().passthrough().nullable(),
+            z.object({}).partial().passthrough().nullish(),
             z.object({ foo: z.string() }).partial().passthrough(),
           ]);
+          const oneOfType = z.union([
+            z.object({}).partial().passthrough().nullish(),
+            z.object({ foo: z.string() }).partial().passthrough(),
+          ]);
+          const allOfType = z
+            .object({ foo: z.string() })
+            .partial()
+            .passthrough()
+            .and(z.object({ bar: z.string() }).partial().passthrough());
 
           export const schemas = {
             anyOfType,
+            oneOfType,
+            allOfType,
+          };
+
+          const endpoints = makeApi([
+            {
+              method: "get",
+              path: "/allOf",
+              requestFormat: "json",
+              response: allOfType,
+            },
+            {
+              method: "get",
+              path: "/anyOf",
+              requestFormat: "json",
+              response: anyOfType,
+            },
+            {
+              method: "get",
+              path: "/oneOf",
+              requestFormat: "json",
+              response: oneOfType,
+            },
+          ]);
+
+          export const api = new Zodios(endpoints);
+
+          export function createApiClient(baseUrl: string, options?: ZodiosOptions) {
+            return new Zodios(baseUrl, endpoints, options);
+          }
+          "
+        `);
+    });
+
+    test("nullable primitive", async () => {
+        const openApiDoc: OpenAPIObject = {
+            openapi: "3.0.0",
+            info: { title: "Schema test", version: "1.0.0" },
+            components: {
+                schemas: {
+                    nullableString: {
+                        type: "string",
+                        nullable: true,
+                    },
+                },
+            },
+            paths: {
+                "/pet": {
+                    put: {
+                        responses: {
+                            "200": {
+                                description: "Successful operation",
+                                content: {
+                                    "application/json": {
+                                        schema: { $ref: "#/components/schemas/nullableString" },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        const output = await generateZodClientFromOpenAPI({ disableWriteToFile: true, openApiDoc });
+        expect(output).toMatchInlineSnapshot(`
+          "import { makeApi, Zodios, type ZodiosOptions } from "@zodios/core";
+          import { z } from "zod";
+
+          const nullableString = z.string().nullable();
+
+          export const schemas = {
+            nullableString,
           };
 
           const endpoints = makeApi([
@@ -360,7 +474,7 @@ describe("missing-zod-chains", () => {
               method: "put",
               path: "/pet",
               requestFormat: "json",
-              response: anyOfType,
+              response: z.string().nullable(),
             },
           ]);
 

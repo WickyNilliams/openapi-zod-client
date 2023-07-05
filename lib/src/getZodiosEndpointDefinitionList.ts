@@ -293,14 +293,15 @@ export const getZodiosEndpointDefinitionList = (doc: OpenAPIObject, options?: Te
 
                 if (maybeSchema) {
                     schema = getZodSchema({ schema: maybeSchema, ctx, meta: { isRequired: true }, options });
-                    schemaString =
-                        (schema.ref ? getZodVarName(schema) : schema.toString()) +
-                        getZodChain({
-                            schema: isReferenceObject(maybeSchema)
-                                ? ctx.resolver.getSchemaByRef(maybeSchema.$ref)
-                                : maybeSchema,
-                            meta: schema.meta,
-                        });
+                    schemaString = schema.ref
+                        ? getZodVarName(schema)
+                        : schema.toString() +
+                          getZodChain({
+                              schema: isReferenceObject(maybeSchema)
+                                  ? ctx.resolver.getSchemaByRef(maybeSchema.$ref)
+                                  : maybeSchema,
+                              meta: schema.meta,
+                          });
                 }
 
                 if (schemaString) {
@@ -341,14 +342,15 @@ export const getZodiosEndpointDefinitionList = (doc: OpenAPIObject, options?: Te
 
                 if (maybeSchema) {
                     schema = getZodSchema({ schema: maybeSchema, ctx, meta: { isRequired: true }, options });
-                    schemaString =
-                        (schema.ref ? getZodVarName(schema) : schema.toString()) +
-                        getZodChain({
-                            schema: isReferenceObject(maybeSchema)
-                                ? ctx.resolver.getSchemaByRef(maybeSchema.$ref)
-                                : maybeSchema,
-                            meta: schema.meta,
-                        });
+                    schemaString = schema.ref
+                        ? getZodVarName(schema)
+                        : schema.toString() +
+                          getZodChain({
+                              schema: isReferenceObject(maybeSchema)
+                                  ? ctx.resolver.getSchemaByRef(maybeSchema.$ref)
+                                  : maybeSchema,
+                              meta: schema.meta,
+                          });
                 }
 
                 if (schemaString) {

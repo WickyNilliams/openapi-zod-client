@@ -51,7 +51,9 @@ export function getZodSchema({ schema, ctx, meta: inheritedMeta, options }: Conv
                 throw new Error(`Schema ${schema.$ref} not found`);
             }
 
-            result = getZodSchema({ schema: actualSchema, ctx, meta, options }).toString();
+            result =
+                getZodSchema({ schema: actualSchema, ctx, meta: { ...meta, isRequired: true }, options }).toString() +
+                getZodChain({ schema: actualSchema, meta: { ...meta, isRequired: true }, options });
         }
 
         if (ctx.zodSchemaByName[schemaName]) {
@@ -228,7 +230,15 @@ export function getZodSchema({ schema, ctx, meta: inheritedMeta, options }: Conv
                 " }";
         }
 
-        return code.assign(`z.object(${properties})${isPartial ? ".partial()" : ""}${additionalProps}`);
+        let nullability = "";
+
+        if (schema.nullable && !meta.parent?.meta.isRequired) {
+            nullability = ".nullish()";
+        } else if (schema.nullable) {
+            nullability = ".nullable()";
+        }
+
+        return code.assign(`z.object(${properties})${isPartial ? ".partial()" : ""}${additionalProps}${nullability}`);
     }
 
     if (!schemaType) return code.assign("z.unknown()");
@@ -263,11 +273,12 @@ export const getZodChain = ({ schema, meta, options }: ZodChainArgs) => {
 };
 
 const getZodChainablePresence = (schema: SchemaObject, meta?: CodeMetaData) => {
-    if (schema.nullable && !meta?.isRequired) {
+    // object gets handled elsewhere, since it's a bit more complex
+    if (schema.type !== "object" && schema.nullable && !meta?.isRequired) {
         return "nullish()";
     }
 
-    if (schema.nullable) {
+    if (schema.type !== "object" && schema.nullable) {
         return "nullable()";
     }
 
